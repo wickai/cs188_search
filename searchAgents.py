@@ -494,15 +494,52 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     foods = foodGrid.asList()
     if not foods:
         return 0
-    if 'mdist' not in problem.heuristicInfo:
-        problem.heuristicInfo['mdist'] = {}
-    mdist = problem.heuristicInfo['mdist']
-    def dist(a, b):
-        key = (a, b)
-        if key not in mdist:
-            mdist[key] = mazeDistance(a, b, problem.startingGameState)
-        return mdist[key]
-    return max(dist(position, f) for f in foods)
+    if 'foodDist' not in problem.heuristicInfo:
+        problem.heuristicInfo['foodDist'] = {}
+    foodDist = problem.heuristicInfo['foodDist']
+    from util import Queue
+    from game import Directions, Actions
+    walls = problem.walls
+    def ensure_map(src):
+        if src in foodDist:
+            return foodDist[src]
+        dist = {}
+        q = Queue()
+        q.push(src)
+        dist[src] = 0
+        while not q.isEmpty():
+            x, y = q.pop()
+            for a in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+                dx, dy = Actions.directionToVector(a)
+                nx, ny = int(x + dx), int(y + dy)
+                if walls[nx][ny]:
+                    continue
+                np = (nx, ny)
+                if np not in dist:
+                    dist[np] = dist[(x, y)] + 1
+                    q.push(np)
+        foodDist[src] = dist
+        return dist
+    dpf = [ensure_map(f).get(position, 0) for f in foods]
+    h1 = 0 if not dpf else max(dpf)
+    best_pair_dist = 0
+    best_pair = None
+    for i in range(len(foods)):
+        fi = foods[i]
+        mi = ensure_map(fi)
+        for j in range(i + 1, len(foods)):
+            fj = foods[j]
+            dij = mi.get(fj, 0)
+            if dij > best_pair_dist:
+                best_pair_dist = dij
+                best_pair = (fi, fj)
+    if best_pair is None:
+        return h1
+    fa, fb = best_pair
+    pa = ensure_map(fa).get(position, 0)
+    pb = ensure_map(fb).get(position, 0)
+    h2 = min(pa, pb) + best_pair_dist
+    return h1 if h1 > h2 else h2
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"

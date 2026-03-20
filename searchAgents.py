@@ -522,20 +522,27 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
         return dist
     dpf = [ensure_map(f).get(position, 0) for f in foods]
     h1 = 0 if not dpf else max(dpf)
-    best_pair_dist = 0
-    best_pair = None
-    for i in range(len(foods)):
-        fi = foods[i]
-        mi = ensure_map(fi)
-        for j in range(i + 1, len(foods)):
-            fj = foods[j]
-            dij = mi.get(fj, 0)
-            if dij > best_pair_dist:
-                best_pair_dist = dij
-                best_pair = (fi, fj)
-    if best_pair is None:
+    sig = tuple(sorted(foods))
+    if 'foodDiam' not in problem.heuristicInfo:
+        problem.heuristicInfo['foodDiam'] = {}
+    foodDiam = problem.heuristicInfo['foodDiam']
+    if sig in foodDiam:
+        fa, fb, best_pair_dist = foodDiam[sig]
+    else:
+        best_pair_dist = 0
+        fa, fb = None, None
+        for i in range(len(foods)):
+            fi = foods[i]
+            mi = ensure_map(fi)
+            for j in range(i + 1, len(foods)):
+                fj = foods[j]
+                dij = mi.get(fj, 0)
+                if dij > best_pair_dist:
+                    best_pair_dist = dij
+                    fa, fb = fi, fj
+        foodDiam[sig] = (fa, fb, best_pair_dist)
+    if fa is None:
         return h1
-    fa, fb = best_pair
     pa = ensure_map(fa).get(position, 0)
     pb = ensure_map(fb).get(position, 0)
     h2 = min(pa, pb) + best_pair_dist

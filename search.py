@@ -87,16 +87,67 @@ def depthFirstSearch(problem: SearchProblem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
+    # print("Start:", problem.getStartState())
+    # s = problem.getStartState()
+    # print("Start:", s, "opetions", problem.getSuccessors(s))
+    # for successor, action, stepCost in problem.getSuccessors(s):
+    #     print("Successor:", successor, "Action:", action, "Step Cost:", stepCost)
+    # print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    # print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    
+    s = problem.getStartState()
+    boarder = util.Stack()
+    boarder.push((s, []))
+    
+    visited = set()
+    while not boarder.isEmpty():
+        state, actions = boarder.pop()
+        if problem.isGoalState(state):
+            return actions
+        if state not in visited:
+            visited.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):
+                boarder.push((successor, actions + [action]))
+    
     util.raiseNotDefined()
 
 def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
+    s = problem.getStartState()
+    boarder = util.Queue()
+    boarder.push((s, []))
+    
+    visited = set()
+    while not boarder.isEmpty():
+        state, actions = boarder.pop()
+        if problem.isGoalState(state):
+            return actions
+        if state not in visited:
+            visited.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):
+                boarder.push((successor, actions + [action]))
+    
     util.raiseNotDefined()
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
+    s = problem.getStartState()
+    boarder = util.PriorityQueue()
+    boarder.push((s, [], 0), 0)
+    
+    visited = set()
+    while not boarder.isEmpty():
+        state, actions, cost = boarder.pop()
+        if problem.isGoalState(state):
+            return actions
+        if state not in visited:
+            visited.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):
+                gn = cost + stepCost
+                boarder.push((successor, actions + [action], gn), gn)
+    
     util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
@@ -104,11 +155,29 @@ def nullHeuristic(state, problem=None):
     A heuristic function estimates the cost from the current state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
+    
     return 0
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+    s = problem.getStartState()
+    boarder = util.PriorityQueue()
+    boarder.push((s, [], 0), 0)
+    
+    visited = set()
+    while not boarder.isEmpty():
+        state, actions, cost = boarder.pop()
+        if problem.isGoalState(state):
+            return actions
+        if state not in visited:
+            visited.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):
+                gn = cost + stepCost
+                hn = heuristic(successor, problem)
+                fn = gn + hn
+                boarder.push((successor, actions + [action], gn), fn)
+    
     util.raiseNotDefined()
 
 

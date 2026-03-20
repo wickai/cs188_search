@@ -525,7 +525,10 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     sig = tuple(sorted(foods))
     if 'foodDiam' not in problem.heuristicInfo:
         problem.heuristicInfo['foodDiam'] = {}
+    if 'foodMST' not in problem.heuristicInfo:
+        problem.heuristicInfo['foodMST'] = {}
     foodDiam = problem.heuristicInfo['foodDiam']
+    foodMST = problem.heuristicInfo['foodMST']
     if sig in foodDiam:
         fa, fb, best_pair_dist = foodDiam[sig]
     else:
@@ -546,7 +549,31 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     pa = ensure_map(fa).get(position, 0)
     pb = ensure_map(fb).get(position, 0)
     h2 = min(pa, pb) + best_pair_dist
-    return h1 if h1 > h2 else h2
+    if sig in foodMST:
+        mst_len = foodMST[sig]
+    else:
+        if len(foods) == 1:
+            mst_len = 0
+        else:
+            visited = {foods[0]}
+            unvisited = set(foods[1:])
+            mst_len = 0
+            while unvisited:
+                best_cost = float("inf")
+                best_node = None
+                for u in unvisited:
+                    for v in visited:
+                        dv = ensure_map(v).get(u, 0)
+                        if dv < best_cost:
+                            best_cost = dv
+                            best_node = u
+                mst_len += best_cost
+                visited.add(best_node)
+                unvisited.remove(best_node)
+        foodMST[sig] = mst_len
+    d0 = 0 if not dpf else min(dpf)
+    h3 = d0 + mst_len
+    return max(h1, h2, h3)
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
